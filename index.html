@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>معاملات کنگره</title>
+<style>
+  body { font-family: Tahoma, sans-serif; background:#0f172a; color:#e2e8f0; margin:0; padding:20px; }
+  h1 { text-align:center; color:#38bdf8; }
+  .info { text-align:center; color:#94a3b8; margin-bottom:20px; font-size:14px; }
+  .search { display:block; margin:0 auto 20px; padding:10px; width:90%; max-width:400px;
+            border-radius:8px; border:1px solid #334155; background:#1e293b; color:#fff; }
+  table { width:100%; border-collapse:collapse; background:#1e293b; border-radius:10px; overflow:hidden; }
+  th, td { padding:12px; text-align:right; border-bottom:1px solid #334155; font-size:14px; }
+  th { background:#334155; color:#38bdf8; }
+  tr:hover { background:#273449; }
+  .buy { color:#4ade80; font-weight:bold; }
+  .sell { color:#f87171; font-weight:bold; }
+  @media(max-width:600px){ th,td{ padding:8px; font-size:12px; } }
+</style>
+</head>
+<body>
+  <h1>🏛️ معاملات سهام کنگره آمریکا</h1>
+  <div class="info" id="info">در حال بارگذاری...</div>
+  <input class="search" id="search" placeholder="🔍 جستجو (نماد یا نام)...">
+  <table>
+    <thead>
+      <tr><th>نام</th><th>نماد</th><th>نوع</th><th>مبلغ</th><th>تاریخ معامله</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+<script>
+let allTrades = [];
+
+function render(list){
+  const rows = document.getElementById("rows");
+  rows.innerHTML = "";
+  list.forEach(t => {
+    const type = (t.transaction||"").toLowerCase();
+    const cls = type.includes("purchase")||type.includes("buy") ? "buy" :
+                type.includes("sale")||type.includes("sell") ? "sell" : "";
+    rows.innerHTML += `<tr>
+      <td>${t.name||"-"}</td>
+      <td>${t.symbol||"-"}</td>
+      <td class="${cls}">${t.transaction||"-"}</td>
+      <td>${t.amount||"-"}</td>
+      <td>${t.date||"-"}</td>
+    </tr>`;
+  });
+}
+
+fetch("data.json")
+  .then(r => r.json())
+  .then(d => {
+    allTrades = d.trades || [];
+    document.getElementById("info").textContent =
+      `آخرین بروزرسانی: ${d.updated} — تعداد: ${d.count}`;
+    render(allTrades);
+  })
+  .catch(e => {
+    document.getElementById("info").textContent = "داده‌ای هنوز موجود نیست (منتظر اولین اجرا بمان).";
+  });
+
+document.getElementById("search").addEventListener("input", e => {
+  const q = e.target.value.toLowerCase();
+  render(allTrades.filter(t =>
+    (t.symbol||"").toLowerCase().includes(q) ||
+    (t.name||"").toLowerCase().includes(q)
+  ));
+});
+</script>
+</body>
+</html>
