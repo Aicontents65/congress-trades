@@ -1,33 +1,33 @@
-import os
 import json
 import requests
 from datetime import datetime
 
-API_KEY = os.environ.get("FINNHUB_API_KEY", "")
-
-# چند سناتور معروف برای تست
-symbols_to_check = ["AAPL", "MSFT", "TSLA", "NVDA", "AMZN", "GOOGL", "META"]
+url = "https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json"
 
 trades = []
 
-for sym in symbols_to_check:
-    url = f"https://finnhub.io/api/v1/stock/congressional-trading?symbol={sym}&token={API_KEY}"
-    try:
-        r = requests.get(url, timeout=15)
-        data = r.json()
-        for item in data.get("data", []):
-            trades.append({
-                "name": item.get("name", "-"),
-                "symbol": item.get("symbol", sym),
-                "transaction": item.get("transactionType", "-"),
-                "amount": item.get("amount", "-"),
-                "date": item.get("transactionDate", "-")
-            })
-    except Exception as e:
-        print(f"error for {sym}: {e}")
+try:
+    r = requests.get(url, timeout=60)
+    print("STATUS CODE:", r.status_code)
+    print("FIRST 300 CHARS:", r.text[:300])
+    
+    data = r.json()
+    print("TYPE OF DATA:", type(data))
+    print("LENGTH:", len(data) if hasattr(data, "__len__") else "?")
 
-# مرتب‌سازی بر اساس تاریخ (جدیدترین اول)
+    for item in data:
+        trades.append({
+            "name": item.get("representative", "-"),
+            "symbol": item.get("ticker", "-"),
+            "transaction": item.get("type", "-"),
+            "amount": item.get("amount", "-"),
+            "date": item.get("transaction_date", "-")
+        })
+except Exception as e:
+    print("ERROR:", repr(e))
+
 trades.sort(key=lambda x: x.get("date", ""), reverse=True)
+trades = trades[:500]
 
 output = {
     "updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
