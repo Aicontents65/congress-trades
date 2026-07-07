@@ -2,29 +2,36 @@ import json
 import requests
 from datetime import datetime
 
-url = "https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json"
+# چند منبع پشتیبان امتحان می‌کنیم
+urls = [
+    "https://raw.githubusercontent.com/timothycarambat/house-stock-watcher-data/main/data/all_transactions.json",
+    "https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json",
+]
 
 trades = []
+data = None
 
-try:
-    r = requests.get(url, timeout=60)
-    print("STATUS CODE:", r.status_code)
-    print("FIRST 300 CHARS:", r.text[:300])
-    
-    data = r.json()
-    print("TYPE OF DATA:", type(data))
-    print("LENGTH:", len(data) if hasattr(data, "__len__") else "?")
+for url in urls:
+    try:
+        print("Trying:", url)
+        r = requests.get(url, timeout=60)
+        print("STATUS CODE:", r.status_code)
+        if r.status_code == 200:
+            data = r.json()
+            print("SUCCESS! LENGTH:", len(data))
+            break
+    except Exception as e:
+        print("ERROR:", repr(e))
 
+if data:
     for item in data:
         trades.append({
-            "name": item.get("representative", "-"),
+            "name": item.get("representative", item.get("senator", "-")),
             "symbol": item.get("ticker", "-"),
             "transaction": item.get("type", "-"),
             "amount": item.get("amount", "-"),
             "date": item.get("transaction_date", "-")
         })
-except Exception as e:
-    print("ERROR:", repr(e))
 
 trades.sort(key=lambda x: x.get("date", ""), reverse=True)
 trades = trades[:500]
