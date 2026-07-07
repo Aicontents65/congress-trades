@@ -1,40 +1,41 @@
 import json
+import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
-# چند منبع پشتیبان امتحان می‌کنیم
-urls = [
-    "https://raw.githubusercontent.com/timothycarambat/house-stock-watcher-data/main/data/all_transactions.json",
-    "https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json",
-]
+API_KEY = os.environ.get("FINNHUB_KEY", "")
+
+# لیست سهام‌های معروف که معمولاً نماینده‌ها معامله می‌کنن
+symbols = ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "GOOGL", "META",
+           "JPM", "BAC", "XOM", "PFE", "DIS", "NFLX", "AMD", "INTC"]
 
 trades = []
-data = None
 
-for url in urls:
+# بازه‌ی زمانی: یک سال اخیر
+to_date = datetime.utcnow().strftime("%Y-%m-%d")
+from_date = (datetime.utcnow() - timedelta(days=365)).strftime("%Y-%m-%d")
+
+for sym in symbols:
+    url = f"https://finnhub.io/api/v1/stock/congressional-trading?symbol={sym}&from={from_date}&to={to_date}&token={API_KEY}"
     try:
-        print("Trying:", url)
-        r = requests.get(url, timeout=60)
-        print("STATUS CODE:", r.status_code)
+        r = requests.get(url, timeout=30)
+        print(f"{sym}: status {r.status_code}")
         if r.status_code == 200:
             data = r.json()
-            print("SUCCESS! LENGTH:", len(data))
-            break
+            for item in data.get("data", []):
+                trades.append({
+                    "name": item.get("name", "-"),
+                    "symbol": sym,
+                    "transaction": item.get("transactionType", "-"),
+                    "amount": item.get("amountFrom", "-"),
+                    "date": item.get("transactionDate", "-")
+                })
+        else:
+            print("  body:", r.text[:150])
     except Exception as e:
-        print("ERROR:", repr(e))
-
-if data:
-    for item in data:
-        trades.append({
-            "name": item.get("representative", item.get("senator", "-")),
-            "symbol": item.get("ticker", "-"),
-            "transaction": item.get("type", "-"),
-            "amount": item.get("amount", "-"),
-            "date": item.get("transaction_date", "-")
-        })
+        print(f"  error {sym}: {repr(e)}")
 
 trades.sort(key=lambda x: x.get("date", ""), reverse=True)
-trades = trades[:500]
 
 output = {
     "updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
