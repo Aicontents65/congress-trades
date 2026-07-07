@@ -1,27 +1,32 @@
 import json
 import requests
 
-URL = "https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json"
+URL = "https://housestockwatcher.com/data/all_transactions.json"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/120.0 Safari/537.36"
+}
 
 def main():
-    r = requests.get(URL, timeout=60)
+    r = requests.get(URL, headers=HEADERS, timeout=60)
     print("status:", r.status_code)
+    print("body (first 300):", r.text[:300])
     r.raise_for_status()
     raw = r.json()
 
-    # جدیدترین‌ها اول
     raw.sort(key=lambda t: t.get("transaction_date", ""), reverse=True)
 
     trades = []
-    for t in raw[:200]:  # ۲۰۰ معامله‌ی آخر
+    for t in raw[:200]:
         trades.append({
             "symbol": t.get("ticker", ""),
-            "name": t.get("senator", ""),
+            "name": t.get("representative", t.get("senator", "")),
             "transactionType": t.get("type", ""),
             "transactionDate": t.get("transaction_date", ""),
             "amount": t.get("amount", ""),
             "assetName": t.get("asset_description", ""),
-            "link": t.get("ptr_link", ""),
         })
 
     with open("data.json", "w") as f:
