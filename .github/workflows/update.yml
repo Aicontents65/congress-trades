@@ -2,8 +2,8 @@ name: Update Congress Trades
 
 on:
   schedule:
-    - cron: "0 */6 * * *"   # هر ۶ ساعت یک‌بار
-  workflow_dispatch:          # اجرای دستی
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
