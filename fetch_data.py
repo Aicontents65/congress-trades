@@ -3,7 +3,7 @@ import os
 import requests
 from datetime import datetime, timedelta
 
-API_KEY = os.environ.get("FINNHUB_KEY", "")
+API_KEY = os.environ.get("FINNHUB_API_KEY", "")
 
 # لیست سهام‌های معروف که معمولاً نماینده‌ها معامله می‌کنن
 symbols = ["AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "GOOGL", "META",
