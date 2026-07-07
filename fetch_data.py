@@ -1,18 +1,13 @@
 import json
 import requests
 
-URL = "https://housestockwatcher.com/data/all_transactions.json"
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/120.0 Safari/537.36"
-}
+# دیتای معاملات مجلس نمایندگان از مخزن GitHub (همیشه فعال)
+URL = "https://raw.githubusercontent.com/timothycarambat/house-stock-watcher-data/main/data/all_transactions.json"
 
 def main():
-    r = requests.get(URL, headers=HEADERS, timeout=60)
+    r = requests.get(URL, timeout=60)
     print("status:", r.status_code)
-    print("body (first 300):", r.text[:300])
+    print("body (first 200):", r.text[:200])
     r.raise_for_status()
     raw = r.json()
 
@@ -22,7 +17,7 @@ def main():
     for t in raw[:200]:
         trades.append({
             "symbol": t.get("ticker", ""),
-            "name": t.get("representative", t.get("senator", "")),
+            "name": t.get("representative", ""),
             "transactionType": t.get("type", ""),
             "transactionDate": t.get("transaction_date", ""),
             "amount": t.get("amount", ""),
